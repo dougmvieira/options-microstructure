@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from statsmodels.api import OLS
 
 
 def plot_shades(bottom, upper, ax=None, **kwargs):
@@ -25,10 +24,6 @@ def resample(df, index):
     empty = pd.DataFrame(np.nan, pd.Index(index, name=df.index.name),
                          df.columns)
     return pd.concat([df, empty]).sort_index().ffill().loc[index]
-
-
-def autorreg_correction(returns):
-    return OLS(returns.iloc[1:], returns.shift().iloc[1:]).fit().fittedvalues
 
 
 def build_discount_curve(calls_ask, calls_bid, puts_ask, puts_bid,

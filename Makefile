@@ -31,8 +31,8 @@ cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/und_pairs_aex.parquet: s
 cache/underlying.parquet: scripts/build_underlying.py cache/und_pairs_aex.parquet
 	python3 scripts/build_underlying.py cache/und_pairs_aex.parquet cache/underlying.parquet
 
-cache/bbo_corr.parquet: scripts/correction.py cache/bbo_aex.parquet
-	python3 scripts/correction.py cache/bbo_aex.parquet cache/bbo_corr.parquet
+cache/bbo_corr.parquet cache/corr_stats.parquet: scripts/correction.py cache/bbo_aex.parquet
+	python3 scripts/correction.py cache/bbo_aex.parquet cache/bbo_corr.parquet cache/corr_stats.parquet
 
 cache/index_aex.parquet: scripts/select_aex_index.py cache/index.parquet
 	python3 scripts/select_aex_index.py cache/index.parquet cache/index_aex.parquet
@@ -46,8 +46,8 @@ cache/aligned_underlying.parquet: scripts/align_index.py scripts/align_settings.
 cache/discount_tseries.parquet cache/discount_curve.parquet: scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet
 	python3 scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet cache/discount_tseries.parquet cache/discount_curve.parquet
 
-cache/ivs.parquet: scripts/build_vol_surface.py cache/aligned_bbo_unc.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet
-	python3 scripts/build_vol_surface.py 2016-01-04 cache/aligned_bbo_unc.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet cache/ivs.parquet
+cache/ivs.parquet: scripts/build_vol_surface.py cache/aligned_bbo.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet
+	python3 scripts/build_vol_surface.py 2016-01-04 cache/aligned_bbo.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet cache/ivs.parquet
 
 cache/heston_params.parquet: scripts/calibrate_heston.py cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet
 	python3 scripts/calibrate_heston.py 2016-01-04 cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet cache/heston_params.parquet
