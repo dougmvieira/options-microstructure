@@ -23,7 +23,7 @@ def calibrate(underlying, bbo, ivs, discount, date):
     expiries = _years_to_expiry(date, mid['Expiry'])
 
     params = heston.calibration_crosssectional(
-        underlying.loc[time, 'Price'], strikes, expiries, mid['Mid'].values,
+        underlying.loc[time], strikes, expiries, mid['Mid'].values,
         initial_guess, mid['Class']=='P', weights)
 
     index = pd.Index(['$V_t$', '$\kappa$', '$\theta$', '$\nu$', '$\rho$'],
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     args = cli.parse_args()
 
     bbo = pd.read_parquet(args.bbo_filename)
-    underlying = pd.read_parquet(args.underlying_filename)
+    underlying = pd.read_parquet(args.underlying_filename).mean(axis=1)
     discount = pd.read_parquet(args.discount_filename)['Discount']
     date = pd.to_datetime(args.date)
     ivs = pd.read_parquet(args.ivs_filename)

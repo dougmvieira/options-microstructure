@@ -27,11 +27,11 @@ def plot(underlying, ivs, params, date):
         g.xs('C').plot(ax=ax, linewidth=0, marker='_', markersize=3)
         g.xs('P').plot(ax=ax, linewidth=0, marker='_', markersize=3, color='g')
 
-        heston_prices = heston.formula(underlying.loc[time, 'Price'], strike_grid,
+        heston_prices = heston.formula(underlying.loc[time], strike_grid,
                                        _years_to_expiry(date, e), *params)
 
         heston_ivs = pd.Series(
-            blackscholes.implied_vol(underlying.loc[time, 'Price'], strike_grid,
+            blackscholes.implied_vol(underlying.loc[time], strike_grid,
                                      _years_to_expiry(date, e), heston_prices),
             strike_grid)
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     cli.add_argument('dest_filename')
     args = cli.parse_args()
 
-    underlying = pd.read_parquet(args.underlying_filename)
+    underlying = pd.read_parquet(args.underlying_filename).mean(axis=1)
     ivs = pd.read_parquet(args.ivs_filename)
     date = pd.to_datetime(args.date)
     params = pd.read_parquet(args.params_filename)['Value']

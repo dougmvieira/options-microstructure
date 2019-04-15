@@ -14,7 +14,8 @@ def build(filename, underlying):
                                        o.loc[('C', *o.name), 'Bid'],
                                        o.loc[('P', *o.name), 'Ask'],
                                        o.loc[('P', *o.name), 'Bid'],
-                                       o.name[1], underlying['Price']))
+                                       underlying['Ask'], underlying['Bid'],
+                                       o.name[1]))
 
     curve = pd.DataFrame(tseries.mean(axis=1).groupby('Expiry').mean(),
                          columns=['Discount'])

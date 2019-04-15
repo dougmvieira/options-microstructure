@@ -12,7 +12,7 @@ def build(bbo, underlying, discount, date):
     return bbo.transform(
         lambda side: side.groupby(['Class', 'Expiry', 'Strike']).transform(
             lambda o: blackscholes.implied_vol(
-                underlying['Price'], discount[o.name[1]]*o.name[2],
+                underlying, discount[o.name[1]]*o.name[2],
                 _years_to_expiry(date, o.name[1]), o, o.name[0]=='P')))
 
 
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     args = cli.parse_args()
 
     bbo = pd.read_parquet(args.bbo_filename)
-    underlying = pd.read_parquet(args.underlying_filename)
+    underlying = pd.read_parquet(args.underlying_filename).mean(axis=1)
     discount = pd.read_parquet(args.discount_filename)['Discount']
     date = pd.to_datetime(args.date)
 

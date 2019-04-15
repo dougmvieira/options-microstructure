@@ -25,8 +25,11 @@ cache/index.parquet: scripts/parse_index.py
 cache/bbo.parquet: scripts/parse_bbo.py cache/reference.parquet
 	python3 scripts/parse_bbo.py DER_EU_ENXT_ALL_BBO_20160104.csv.zip cache/reference.parquet cache/bbo.parquet
 
-cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet: scripts/select_aex_bbo.py cache/bbo.parquet cache/trade.parquet
-	python3 scripts/select_aex_bbo.py cache/bbo.parquet cache/trade.parquet cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet
+cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/und_pairs_aex.parquet: scripts/select_aex_bbo.py cache/bbo.parquet cache/trade.parquet
+	python3 scripts/select_aex_bbo.py cache/bbo.parquet cache/trade.parquet cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/und_pairs_aex.parquet
+
+cache/underlying.parquet: scripts/build_underlying.py cache/und_pairs_aex.parquet
+	python3 scripts/build_underlying.py cache/und_pairs_aex.parquet cache/underlying.parquet
 
 cache/bbo_corr.parquet: scripts/correction.py cache/bbo_aex.parquet
 	python3 scripts/correction.py cache/bbo_aex.parquet cache/bbo_corr.parquet
@@ -37,26 +40,26 @@ cache/index_aex.parquet: scripts/select_aex_index.py cache/index.parquet
 cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet: scripts/align_bbo.py scripts/align_settings.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet
 	python3 scripts/align_bbo.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet
 
-cache/aligned_index.parquet: scripts/align_index.py scripts/align_settings.py cache/index_aex.parquet
-	python3 scripts/align_index.py cache/index_aex.parquet cache/aligned_index.parquet
+cache/aligned_underlying.parquet: scripts/align_index.py scripts/align_settings.py cache/underlying.parquet
+	python3 scripts/align_index.py cache/underlying.parquet cache/aligned_underlying.parquet
 
-cache/discount_tseries.parquet cache/discount_curve.parquet: scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_index.parquet
-	python3 scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_index.parquet cache/discount_tseries.parquet cache/discount_curve.parquet
+cache/discount_tseries.parquet cache/discount_curve.parquet: scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet
+	python3 scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet cache/discount_tseries.parquet cache/discount_curve.parquet
 
-cache/ivs.parquet: scripts/build_vol_surface.py cache/aligned_bbo_unc.parquet cache/discount_curve.parquet cache/aligned_index.parquet
-	python3 scripts/build_vol_surface.py 2016-01-04 cache/aligned_bbo_unc.parquet cache/discount_curve.parquet cache/aligned_index.parquet cache/ivs.parquet
+cache/ivs.parquet: scripts/build_vol_surface.py cache/aligned_bbo_unc.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet
+	python3 scripts/build_vol_surface.py 2016-01-04 cache/aligned_bbo_unc.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet cache/ivs.parquet
 
-cache/heston_params.parquet: scripts/calibrate_heston.py cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_index.parquet
-	python3 scripts/calibrate_heston.py 2016-01-04 cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_index.parquet cache/heston_params.parquet
+cache/heston_params.parquet: scripts/calibrate_heston.py cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet
+	python3 scripts/calibrate_heston.py 2016-01-04 cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet cache/heston_params.parquet
 
-cache/heston_vols.parquet: scripts/calibrate_vol.py cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_index.parquet cache/heston_params.parquet
-	python3 scripts/calibrate_vol.py 2016-01-04 cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_index.parquet cache/heston_params.parquet cache/heston_vols.parquet
+cache/heston_vols.parquet: scripts/calibrate_vol.py cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet cache/heston_params.parquet
+	python3 scripts/calibrate_vol.py 2016-01-04 cache/aligned_bbo.parquet cache/ivs.parquet cache/discount_curve.parquet cache/aligned_underlying.parquet cache/heston_params.parquet cache/heston_vols.parquet
 
-cache/reg_greeks.parquet: scripts/regression.py cache/aligned_bbo.parquet cache/aligned_index.parquet cache/heston_vols.parquet
-	python3 scripts/regression.py cache/aligned_bbo.parquet cache/aligned_index.parquet cache/heston_vols.parquet cache/reg_greeks.parquet
+cache/reg_greeks.parquet: scripts/regression.py cache/aligned_bbo.parquet cache/aligned_underlying.parquet cache/heston_vols.parquet
+	python3 scripts/regression.py cache/aligned_bbo.parquet cache/aligned_underlying.parquet cache/heston_vols.parquet cache/reg_greeks.parquet
 
-cache/heston_greeks.parquet: scripts/heston_greeks.py cache/aligned_bbo.parquet cache/aligned_index.parquet cache/discount_curve.parquet cache/heston_params.parquet cache/heston_vols.parquet
-	python3 scripts/heston_greeks.py 2016-01-04 cache/aligned_bbo.parquet cache/aligned_index.parquet cache/discount_curve.parquet cache/heston_params.parquet cache/heston_vols.parquet cache/heston_greeks.parquet
+cache/heston_greeks.parquet: scripts/heston_greeks.py cache/aligned_bbo.parquet cache/aligned_underlying.parquet cache/discount_curve.parquet cache/heston_params.parquet cache/heston_vols.parquet
+	python3 scripts/heston_greeks.py 2016-01-04 cache/aligned_bbo.parquet cache/aligned_underlying.parquet cache/discount_curve.parquet cache/heston_params.parquet cache/heston_vols.parquet cache/heston_greeks.parquet
 
 
 results/aex_index.png: scripts/plot_aex_index.py cache/index.parquet
@@ -71,8 +74,8 @@ results/discount_tseries.png results/discount_curve.png: scripts/plot_discount.p
 results/heston_params.tex: scripts/table_heston_fit.py cache/heston_params.parquet
 	python3 scripts/table_heston_fit.py cache/heston_params.parquet results/heston_params.tex
 
-results/heston_fit.png: scripts/plot_heston_fit.py cache/aligned_index.parquet cache/ivs.parquet cache/heston_params.parquet
-	python3 scripts/plot_heston_fit.py 2016-01-04 cache/aligned_index.parquet cache/ivs.parquet cache/heston_params.parquet results/heston_fit.png
+results/heston_fit.png: scripts/plot_heston_fit.py cache/aligned_underlying.parquet cache/ivs.parquet cache/heston_params.parquet
+	python3 scripts/plot_heston_fit.py 2016-01-04 cache/aligned_underlying.parquet cache/ivs.parquet cache/heston_params.parquet results/heston_fit.png
 
 results/heston_vols.png: scripts/plot_heston_vols.py cache/heston_vols.parquet
 	python3 scripts/plot_heston_vols.py cache/heston_vols.parquet results/heston_vols.png

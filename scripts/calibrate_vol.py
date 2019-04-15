@@ -22,7 +22,7 @@ def calibrate(underlying, bbo, ivs, discount, date, params):
     put = properties['Class'] == 'P'
 
     vols = mid.agg(
-        lambda o: heston.calibration_vol(underlying.loc[o.name, 'Price'],
+        lambda o: heston.calibration_vol(underlying.loc[o.name],
                                          strikes, expiries, o.values, kappa,
                                          theta, nu, rho, put, vol),
         axis=1)
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     args = cli.parse_args()
 
     bbo = pd.read_parquet(args.bbo_filename)
-    underlying = pd.read_parquet(args.underlying_filename)
+    underlying = pd.read_parquet(args.underlying_filename).mean(axis=1)
     discount = pd.read_parquet(args.discount_filename)['Discount']
     date = pd.to_datetime(args.date)
     ivs = pd.read_parquet(args.ivs_filename)

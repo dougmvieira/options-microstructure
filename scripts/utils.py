@@ -31,8 +31,8 @@ def autorreg_correction(returns):
     return OLS(returns.iloc[1:], returns.shift().iloc[1:]).fit().fittedvalues
 
 
-def build_discount_curve(calls_ask, calls_bid, puts_ask, puts_bid, strikes,
-                         underlying_price):
-    return pd.concat([(underlying_price - calls_ask + puts_bid)/strikes,
-                      (underlying_price - calls_bid + puts_ask)/strikes],
+def build_discount_curve(calls_ask, calls_bid, puts_ask, puts_bid,
+                         underlying_ask, underlying_bid, strikes):
+    return pd.concat([(underlying_bid - calls_ask + puts_bid)/strikes,
+                      (underlying_ask - calls_bid + puts_ask)/strikes],
                      axis=1, keys=['Bid', 'Ask'])

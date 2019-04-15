@@ -10,7 +10,9 @@ def regress(bbo, underlying, vols):
     mid_rets = mid.diff().iloc[1:]
     mid_rets.name = 'Mid'
 
-    regressors = pd.concat([underlying['Price'], vols], axis=1).diff().iloc[1:]
+    underlying.name = 'Price'
+    regressors = pd.concat([underlying, vols], axis=1).diff().iloc[1:]
+
     ols = mid_rets.agg(lambda o: OLS(o, regressors).fit())
     delta = ols.map(lambda x: x.params['Price'])
     vega = ols.map(lambda x: x.params['Volatility'])
@@ -26,7 +28,7 @@ if __name__ == '__main__':
     args = cli.parse_args()
 
     bbo = pd.read_parquet(args.bbo_filename)
-    underlying = pd.read_parquet(args.underlying_filename)
+    underlying = pd.read_parquet(args.underlying_filename).mean(axis=1)
     vols = pd.read_parquet(args.vols_filename)['Volatility']
 
     coefs = regress(bbo, underlying, vols)
