@@ -1,13 +1,19 @@
-all: results/aex_index.png selection discount calibration regression
+all: results/aex_index.png selection acf_pacf discount calibration regression results/correction_stats.tex epps
 
 
 selection: results/sel_calls.tex results/sel_puts.tex
 
 discount: results/discount_tseries.png results/discount_curve.png
 
+acf_pacf: results/acf_pacf.png results/acf_pacf_rets.png results/underlying_acf_pacf.png results/acf_pacf_option.txt
+
 calibration: results/heston_fit.png results/heston_params.tex results/heston_vols.png
 
 regression: results/compare_deltas_call.png results/compare_deltas_put.png results/compare_vegas_call.png results/compare_vegas_put.png
+
+rough: results/vols.png results/variogram.png
+
+epps: results/epps_atm.png results/epps_large_tick.png
 
 
 DER_EU_ENXT_ALL_BBO_20160104.csv.zip:
@@ -81,4 +87,19 @@ results/heston_vols.png: scripts/plot_heston_vols.py cache/heston_vols.parquet
 	python3 scripts/plot_heston_vols.py cache/heston_vols.parquet results/heston_vols.png
 
 results/compare_deltas_call.png results/compare_deltas_put.png results/compare_vegas_call.png results/compare_vegas_put.png: scripts/plot_compare_greeks.py cache/reg_greeks.parquet cache/heston_greeks.parquet
-	ipython3 scripts/plot_compare_greeks.py cache/reg_greeks.parquet cache/heston_greeks.parquet results/compare_deltas_call.png results/compare_deltas_put.png results/compare_vegas_call.png results/compare_vegas_put.png
+	python3 scripts/plot_compare_greeks.py cache/reg_greeks.parquet cache/heston_greeks.parquet results/compare_deltas_call.png results/compare_deltas_put.png results/compare_vegas_call.png results/compare_vegas_put.png
+
+results/acf_pacf.png results/acf_pacf_rets.png results/underlying_acf_pacf.png results/acf_pacf_option.txt: scripts/plot_acf_pacf.py cache/aligned_bbo_unc.parquet cache/aligned_underlying.parquet
+	python3 scripts/plot_acf_pacf.py cache/aligned_bbo_unc.parquet cache/aligned_underlying.parquet results/acf_pacf.png results/underlying_acf_pacf.png results/acf_pacf_rets.png > results/acf_pacf_option.txt
+
+results/correction_stats.tex: scripts/table_correction_stats.py cache/aligned_bbo_unc.parquet cache/corr_stats.parquet
+	python3 scripts/table_correction_stats.py cache/aligned_bbo_unc.parquet cache/corr_stats.parquet results/correction_stats.tex
+
+results/vols.png results/variogram.png: scripts/rough.py cache/ivs.parquet cache/heston_vols.parquet
+	python3 scripts/rough.py "('C', '2016-02-19', 430)" cache/ivs.parquet cache/heston_vols.parquet results/vols.png results/variogram.png
+
+results/epps_atm.png: scripts/epps.py cache/bbo_aex.parquet cache/underlying.parquet cache/bbo_corr.parquet
+	python3 scripts/epps.py "('C', '2016-02-19', 430)" cache/bbo_aex.parquet cache/underlying.parquet cache/bbo_corr.parquet results/epps_atm.png
+
+results/epps_large_tick.png: scripts/epps.py cache/bbo_aex.parquet cache/underlying.parquet cache/bbo_corr.parquet
+	python3 scripts/epps.py "('C', '2016-02-19', 470)" cache/bbo_aex.parquet cache/underlying.parquet cache/bbo_corr.parquet results/epps_large_tick.png

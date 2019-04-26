@@ -7,18 +7,18 @@ import matplotlib.cm as cm
 import settings
 
 
-def plot_greek(heston, reg, groupby, invert_id=False):
+def plot_greek(heston, reg):
     greek = pd.concat([heston.groupby(['Expiry', 'Strike']).mean(), reg],
                       axis=1, keys=['Model', 'Regression'])
 
     edges = greek['Model'].min(), greek['Model'].max()
-    id_line = pd.Series((-edges[0], -edges[1]) if invert_id else edges, edges)
+    id_line = pd.Series(edges, edges)
 
     _, ax = plt.subplots(**settings.PLOT)
-    colours = cm.get_cmap('tab10' if len(greek.groupby(groupby)) <= 10 else 'tab20').colors
-    for (label, group), colour in zip(greek.groupby(groupby), colours):
+    colours = cm.get_cmap('tab10' if len(greek.groupby('Expiry')) <= 10 else 'tab20').colors
+    for (label, group), colour in zip(greek.groupby('Expiry'), colours):
         group.plot.scatter(x='Model', y='Regression', ax=ax, label=label, color=colour)
-    plt.legend(title=groupby)
+    plt.legend(title='Expiry')
     id_line.plot(ax=ax)
 
     return ax.get_figure()
@@ -37,18 +37,17 @@ if __name__ == '__main__':
     reg = pd.read_parquet(args.reg_greeks_filename)
     heston = pd.read_parquet(args.heston_greeks_filename)
 
-    fig = plot_greek(heston.loc['C', 'Delta'], reg.loc['C', 'Delta'], 'Expiry')
+    fig = plot_greek(heston.loc['C', 'Delta'], reg.loc['C', 'Delta'])
     fig.savefig(args.dest_deltas_call_filename)
     fig.clf()
 
-    fig = plot_greek(heston.loc['P', 'Delta'], reg.loc['P', 'Delta'], 'Expiry')
+    fig = plot_greek(heston.loc['P', 'Delta'], reg.loc['P', 'Delta'])
     fig.savefig(args.dest_deltas_put_filename)
     fig.clf()
 
-    fig = plot_greek(heston.loc['C', 'Vega'], reg.loc['C', 'Vega'], 'Strike')
+    fig = plot_greek(heston.loc['C', 'Vega'], reg.loc['C', 'Vega'])
     fig.savefig(args.dest_vegas_call_filename)
     fig.clf()
 
-    fig = plot_greek(heston.loc['P', 'Vega'], reg.loc['P', 'Vega'], 'Strike',
-                     invert_id=True)
+    fig = plot_greek(heston.loc['P', 'Vega'], reg.loc['P', 'Vega'])
     fig.savefig(args.dest_vegas_put_filename)
