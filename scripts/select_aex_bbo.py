@@ -6,7 +6,6 @@ from utils import resample
 
 
 NOPTS = 40
-UNDPAIR = [('C', '2016-01-15', 430), ('P', '2016-01-15', 430)]
 PAIRSSEL = [('C', '2016-02-19', 430), ('P', '2016-02-19', 430),
             ('C', '2016-03-18', 430), ('P', '2016-03-18', 430),
             ('C', '2016-06-17', 420), ('P', '2016-06-17', 420),
@@ -19,7 +18,7 @@ if __name__ == '__main__':
     cli.add_argument('trade_filename')
     cli.add_argument('dest_bbo_filename')
     cli.add_argument('dest_bbo_pairs_filename')
-    cli.add_argument('dest_und_pair_filename')
+    cli.add_argument('dest_underlying_filename')
     args = cli.parse_args()
 
     trade = pd.read_parquet(args.trade_filename)['Volume'].loc['AEX']
@@ -33,13 +32,16 @@ if __name__ == '__main__':
                   ].sort_index(
                   ).index
 
-    bbo = pd.read_parquet(args.src_filename).loc['AEX'].loc[['C', 'P']]
+    bbo = pd.read_parquet(args.src_filename)
+    underlying = bbo.loc['FTI', 'F', '2016-01-15', 0]
+
+    bbo = bbo.loc['AEX'].loc[['C', 'P']]
     bbo.sort_index(inplace=True)
 
-    und_pair = pd.concat([bbo.xs(sel, drop_level=False) for sel in UNDPAIR])
     bbo_pairs = pd.concat([bbo.xs(sel, drop_level=False) for sel in PAIRSSEL])
     bbo = pd.concat([bbo.xs(sel, drop_level=False) for sel in opt_sel])
 
+
     bbo.to_parquet(args.dest_bbo_filename, coerce_timestamps='us')
     bbo_pairs.to_parquet(args.dest_bbo_pairs_filename, coerce_timestamps='us')
-    und_pair.to_parquet(args.dest_und_pair_filename, coerce_timestamps='us')
+    underlying.to_parquet(args.dest_underlying_filename, coerce_timestamps='us')

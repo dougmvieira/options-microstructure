@@ -31,11 +31,8 @@ cache/index.parquet: scripts/parse_index.py
 cache/bbo.parquet: scripts/parse_bbo.py cache/reference.parquet
 	python3 scripts/parse_bbo.py DER_EU_ENXT_ALL_BBO_20160104.csv.zip cache/reference.parquet cache/bbo.parquet
 
-cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/und_pairs_aex.parquet: scripts/select_aex_bbo.py cache/bbo.parquet cache/trade.parquet
-	python3 scripts/select_aex_bbo.py cache/bbo.parquet cache/trade.parquet cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/und_pairs_aex.parquet
-
-cache/underlying.parquet: scripts/build_underlying.py cache/und_pairs_aex.parquet
-	python3 scripts/build_underlying.py cache/und_pairs_aex.parquet cache/underlying.parquet
+cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/underlying.parquet: scripts/select_aex_bbo.py cache/bbo.parquet cache/trade.parquet
+	python3 scripts/select_aex_bbo.py cache/bbo.parquet cache/trade.parquet cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet  cache/underlying.parquet
 
 cache/bbo_corr.parquet cache/corr_stats.parquet: scripts/correction.py cache/bbo_aex.parquet
 	python3 scripts/correction.py cache/bbo_aex.parquet cache/bbo_corr.parquet cache/corr_stats.parquet
