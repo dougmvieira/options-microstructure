@@ -34,11 +34,8 @@ cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/underlying.parquet: scri
 cache/bbo_corr.parquet cache/corr_stats.parquet: scripts/correction.py cache/bbo_aex.parquet
 	python3 scripts/correction.py cache/bbo_aex.parquet cache/bbo_corr.parquet cache/corr_stats.parquet
 
-cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet: scripts/align_bbo.py scripts/align_settings.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet
-	python3 scripts/align_bbo.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet
-
-cache/aligned_underlying.parquet: scripts/align_underlying.py scripts/align_settings.py cache/underlying.parquet
-	python3 scripts/align_index.py cache/underlying.parquet cache/aligned_underlying.parquet
+cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet cache/aligned_underlying.parquet: scripts/align_bbo.py scripts/align_settings.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet cache/underlying.parquet
+	python3 scripts/align_bbo.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet cache/underlying.parquet cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet cache/aligned_underlying.parquet
 
 cache/discount_tseries.parquet cache/discount_curve.parquet: scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet
 	python3 scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet cache/discount_tseries.parquet cache/discount_curve.parquet
