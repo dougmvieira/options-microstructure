@@ -11,6 +11,7 @@ if __name__ == '__main__':
     cli.add_argument('dest_filename')
     args = cli.parse_args()
 
-    index = pd.read_parquet(args.src_filename).loc['AEX', 'Price']
+    index = pd.read_parquet(args.src_filename)
+    index = index.loc['2016-01-04 08:00:00':'2016-01-04 16:30:00']
     ax = index.plot(**settings.PLOT).set_ylabel('Price')
     ax.get_figure().savefig(args.dest_filename)

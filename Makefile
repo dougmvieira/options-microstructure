@@ -25,9 +25,6 @@ cache/reference.parquet: scripts/parse_reference.py
 cache/trade.parquet: scripts/parse_trade.py cache/reference.parquet
 	python3 scripts/parse_trade.py ftp://nextsamples:nextsamples@ftp.eua-data.euronext.com/NEXTHISTORY_SAMPLES/CURRENT/DER_EU_ENXT_ALL_TRADE_20160104.csv.zip cache/reference.parquet cache/trade.parquet
 
-cache/index.parquet: scripts/parse_index.py
-	python3 scripts/parse_index.py ftp://nextsamples:nextsamples@ftp.eua-data.euronext.com/NEXTHISTORY_SAMPLES/CURRENT/EuronextIndices-Intraday-20160104.csv.zip cache/index.parquet
-
 cache/bbo.parquet: scripts/parse_bbo.py cache/reference.parquet
 	python3 scripts/parse_bbo.py DER_EU_ENXT_ALL_BBO_20160104.csv.zip cache/reference.parquet cache/bbo.parquet
 
@@ -37,13 +34,10 @@ cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/underlying.parquet: scri
 cache/bbo_corr.parquet cache/corr_stats.parquet: scripts/correction.py cache/bbo_aex.parquet
 	python3 scripts/correction.py cache/bbo_aex.parquet cache/bbo_corr.parquet cache/corr_stats.parquet
 
-cache/index_aex.parquet: scripts/select_aex_index.py cache/index.parquet
-	python3 scripts/select_aex_index.py cache/index.parquet cache/index_aex.parquet
-
 cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet: scripts/align_bbo.py scripts/align_settings.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet
 	python3 scripts/align_bbo.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet
 
-cache/aligned_underlying.parquet: scripts/align_index.py scripts/align_settings.py cache/underlying.parquet
+cache/aligned_underlying.parquet: scripts/align_underlying.py scripts/align_settings.py cache/underlying.parquet
 	python3 scripts/align_index.py cache/underlying.parquet cache/aligned_underlying.parquet
 
 cache/discount_tseries.parquet cache/discount_curve.parquet: scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet
@@ -65,8 +59,8 @@ cache/heston_greeks.parquet: scripts/heston_greeks.py cache/aligned_bbo.parquet 
 	python3 scripts/heston_greeks.py 2016-01-04 cache/aligned_bbo.parquet cache/aligned_underlying.parquet cache/discount_curve.parquet cache/heston_params.parquet cache/heston_vols.parquet cache/heston_greeks.parquet
 
 
-results/aex_index.png: scripts/plot_aex_index.py cache/index.parquet
-	python3 scripts/plot_aex_index.py cache/index.parquet results/aex_index.png
+results/aex_index.png: scripts/plot_aex_index.py cache/underlying.parquet
+	python3 scripts/plot_aex_index.py cache/underlying.parquet results/aex_index.png
 
 results/sel_calls.tex results/sel_puts.tex: scripts/table_option_selection.py cache/aligned_bbo.parquet
 	python3 scripts/table_option_selection.py cache/aligned_bbo.parquet results/sel_calls.tex results/sel_puts.tex
