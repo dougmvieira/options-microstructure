@@ -1,4 +1,4 @@
-all: results/aex_index.png selection acf_pacf discount calibration regression results/correction_stats.tex epps
+all: results/aex_index.png selection acf_pacf discount calibration regression results/correction_stats.tex rough epps
 
 
 selection: results/sel_calls.tex results/sel_puts.tex

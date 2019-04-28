@@ -48,8 +48,5 @@ if __name__ == '__main__':
     ivs = pd.read_parquet(args.ivs_filename)
     params = pd.read_parquet(args.params_filename)['Value']
 
-    ivs['Ask'] = 1
-    ivs['Bid'] = 0
-
     vols = calibrate(underlying, bbo, ivs, discount, date, params)
     vols.to_parquet(args.dest_filename)

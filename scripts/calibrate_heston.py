@@ -47,8 +47,5 @@ if __name__ == '__main__':
     date = pd.to_datetime(args.date)
     ivs = pd.read_parquet(args.ivs_filename)
 
-    ivs['Ask'] = 1
-    ivs['Bid'] = 0
-
     params = calibrate(underlying, bbo, ivs, discount, date)
     params.to_parquet(args.dest_filename)
