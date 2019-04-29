@@ -23,7 +23,8 @@ def is_consecutive_unique(df):
 def resample(df, index):
     empty = pd.DataFrame(np.nan, pd.Index(index, name=df.index.name),
                          df.columns)
-    return pd.concat([df, empty]).sort_index().ffill().loc[index]
+    resampled = pd.concat([df, empty]).sort_index().ffill().loc[index]
+    return resampled.loc[~resampled.index.duplicated()]
 
 
 def build_discount_curve(calls_ask, calls_bid, puts_ask, puts_bid,
@@ -31,3 +32,7 @@ def build_discount_curve(calls_ask, calls_bid, puts_ask, puts_bid,
     return pd.concat([(underlying_bid - calls_ask + puts_bid)/strikes,
                       (underlying_ask - calls_bid + puts_ask)/strikes],
                      axis=1, keys=['Bid', 'Ask'])
+
+
+def years_to_expiry(date, expiry):
+    return (expiry - date)/pd.to_timedelta('365d')

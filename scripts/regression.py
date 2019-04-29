@@ -19,6 +19,7 @@ def regress(bbo, underlying, vols):
 
     return pd.concat([delta, vega], keys=['Delta', 'Vega'], axis=1)
 
+
 if __name__ == '__main__':
     cli = ArgumentParser()
     cli.add_argument('bbo_filename')

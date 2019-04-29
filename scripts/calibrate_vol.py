@@ -4,9 +4,7 @@ import numpy as np
 import pandas as pd
 from fyne import blackscholes, heston
 
-
-def _years_to_expiry(date, expiry):
-    return (expiry - date)/pd.to_timedelta('365d')
+from utils import years_to_expiry
 
 
 def calibrate(underlying, bbo, ivs, discount, date, params):
@@ -18,7 +16,7 @@ def calibrate(underlying, bbo, ivs, discount, date, params):
     vol, kappa, theta, nu, rho = params
     properties = mid.columns.to_frame(index=False)
     strikes = discount[properties['Expiry']].values*properties['Strike']
-    expiries = _years_to_expiry(date, properties['Expiry'])
+    expiries = years_to_expiry(date, properties['Expiry'])
     put = properties['Class'] == 'P'
 
     vols = mid.agg(

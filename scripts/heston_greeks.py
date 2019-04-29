@@ -3,9 +3,7 @@ from argparse import ArgumentParser
 import pandas as pd
 from fyne import heston
 
-
-def _years_to_expiry(date, expiry):
-    return (expiry - date)/pd.to_timedelta('365d')
+from utils import years_to_expiry
 
 
 def get_heston_greeks(date, bbo, underlying, discount, vols, params):
@@ -16,7 +14,7 @@ def get_heston_greeks(date, bbo, underlying, discount, vols, params):
     properties = mid.columns.to_frame(index=False)
 
     strikes = discount[properties['Expiry']].values*properties['Strike'].values
-    expiries = _years_to_expiry(date, properties['Expiry'])
+    expiries = years_to_expiry(date, properties['Expiry'])
     put = (properties['Class']=='P')
 
     deltas = pd.DataFrame(heston.delta(underlying.values[:, None],

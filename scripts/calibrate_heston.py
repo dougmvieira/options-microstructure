@@ -4,9 +4,7 @@ import numpy as np
 import pandas as pd
 from fyne import blackscholes, heston
 
-
-def _years_to_expiry(date, expiry):
-    return (expiry - date)/pd.to_timedelta('365d')
+from utils import years_to_expiry
 
 
 def calibrate(underlying, bbo, ivs, discount, date):
@@ -20,7 +18,7 @@ def calibrate(underlying, bbo, ivs, discount, date):
 
     initial_guess = np.array([0.08, 7.2, 0.05, 1.25, -0.54])
     strikes = discount[mid['Expiry']].values*mid['Strike']
-    expiries = _years_to_expiry(date, mid['Expiry'])
+    expiries = years_to_expiry(date, mid['Expiry'])
 
     params = heston.calibration_crosssectional(
         underlying.loc[time], strikes, expiries, mid['Mid'].values,
