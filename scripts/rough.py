@@ -26,15 +26,14 @@ def clean(ts):
     return ts[~(diffs.abs() > 3*diffs.std())]
 
 
-def plot_vols(heston_vols, implied_vols):
-    ax = heston_vols.plot(label=f'{heston_vols.name} (left)', **settings.PLOT)
-    ax.set_ylabel(heston_vols.name)
-    ax = implied_vols.plot(ax=ax, secondary_y=True, label=implied_vols.name)
-    ax.set_ylabel(implied_vols.name, rotation=-90, va='bottom')
+def plot_vols(heston_vols, implied_vols, heston_params):
+    vols = pd.concat([np.sqrt(heston_vols), implied_vols],
+                     keys=['Heston', 'Implied'], axis=1)
+    vols['Long-term'] = np.sqrt(heston_params['$\theta$'])
+    vols.index.name = 'Time'
 
-    fig = ax.get_figure()
-    fig.tight_layout()
-    return fig
+    ax = vols.plot().set_ylabel('Volatility')
+    return ax.get_figure()
 
 
 def plot_variogram(vols, **plot_kwargs):
@@ -45,8 +44,8 @@ def plot_variogram(vols, **plot_kwargs):
     fit_line = np.exp(np.log(variogram.values[0]) + 2*hurst_index*(x - x[0]))
     fit_line = pd.Series(fit_line, variogram.index)
 
-    ax = fit_line.plot(label='$H = {hurst_index}$', logx=False, logy=False,
-                       **plot_kwargs)
+    ax = fit_line.plot(label=f'$H = {hurst_index}$', logx=False, logy=False,
+                       legend=True, **plot_kwargs)
     colour = ax.get_lines()[-1].get_color()
     ax = variogram.reset_index(
                  ).plot.scatter(x='Lag', y='Variogram', logx=True, logy=True,
@@ -60,6 +59,7 @@ if __name__ == '__main__':
     cli.add_argument('option')
     cli.add_argument('src_implied_vols_filename')
     cli.add_argument('src_heston_vols_filename')
+    cli.add_argument('src_heston_params_filename')
     cli.add_argument('dest_vols_filename')
     cli.add_argument('dest_variogram_filename')
     args = cli.parse_args()
@@ -73,7 +73,9 @@ if __name__ == '__main__':
     heston_vols = clean(heston_vols)
     heston_vols.name = 'Heston volatility'
 
-    fig = plot_vols(heston_vols, implied_vols)
+    heston_params = pd.read_parquet(args.src_heston_params_filename)['Value']
+
+    fig = plot_vols(heston_vols, implied_vols, heston_params)
     fig.savefig(args.dest_vols_filename)
     fig.clf()
 
