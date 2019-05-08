@@ -34,8 +34,8 @@ cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/underlying.parquet: scri
 cache/bbo_corr.parquet cache/corr_stats.parquet: scripts/correction.py cache/bbo_aex.parquet
 	python3 scripts/correction.py cache/bbo_aex.parquet cache/bbo_corr.parquet cache/corr_stats.parquet
 
-cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet cache/aligned_underlying.parquet: scripts/align_bbo.py scripts/align_settings.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet cache/underlying.parquet
-	python3 scripts/align_bbo.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/bbo_corr.parquet cache/underlying.parquet cache/aligned_bbo_unc.parquet cache/aligned_bbo_pairs.parquet cache/aligned_bbo.parquet cache/aligned_underlying.parquet
+cache/aligned_bbo.parquet cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet: scripts/align_bbo.py scripts/align_settings.py scripts/utils.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/underlying.parquet
+	python3 scripts/align_bbo.py cache/bbo_aex.parquet cache/bbo_pairs_aex.parquet cache/underlying.parquet cache/aligned_bbo.parquet cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet
 
 cache/discount_tseries.parquet cache/discount_curve.parquet: scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet
 	python3 scripts/build_discount.py cache/aligned_bbo_pairs.parquet cache/aligned_underlying.parquet cache/discount_tseries.parquet cache/discount_curve.parquet
@@ -77,11 +77,11 @@ results/heston_vols.png: scripts/plot_heston_vols.py cache/heston_vols.parquet
 results/compare_deltas_call.png results/compare_deltas_put.png results/compare_vegas_call.png results/compare_vegas_put.png: scripts/plot_compare_greeks.py cache/reg_greeks.parquet cache/heston_greeks.parquet
 	python3 scripts/plot_compare_greeks.py cache/reg_greeks.parquet cache/heston_greeks.parquet results/compare_deltas_call.png results/compare_deltas_put.png results/compare_vegas_call.png results/compare_vegas_put.png
 
-results/acf_pacf.png results/acf_pacf_rets.png results/underlying_acf_pacf.png results/acf_pacf_option.txt: scripts/plot_acf_pacf.py cache/aligned_bbo_unc.parquet cache/aligned_underlying.parquet
-	python3 scripts/plot_acf_pacf.py cache/aligned_bbo_unc.parquet cache/aligned_underlying.parquet results/acf_pacf.png results/underlying_acf_pacf.png results/acf_pacf_rets.png > results/acf_pacf_option.txt
+results/acf_pacf.png results/acf_pacf_rets.png results/underlying_acf_pacf.png results/acf_pacf_option.txt: scripts/plot_acf_pacf.py cache/aligned_bbo.parquet cache/aligned_underlying.parquet
+	python3 scripts/plot_acf_pacf.py cache/aligned_bbo.parquet cache/aligned_underlying.parquet results/acf_pacf.png results/underlying_acf_pacf.png results/acf_pacf_rets.png > results/acf_pacf_option.txt
 
-results/correction_stats.tex: scripts/table_correction_stats.py cache/aligned_bbo_unc.parquet cache/corr_stats.parquet
-	python3 scripts/table_correction_stats.py cache/aligned_bbo_unc.parquet cache/corr_stats.parquet results/correction_stats.tex
+results/correction_stats.tex: scripts/table_correction_stats.py cache/aligned_bbo.parquet cache/corr_stats.parquet
+	python3 scripts/table_correction_stats.py cache/aligned_bbo.parquet cache/corr_stats.parquet results/correction_stats.tex
 
 results/vols.png results/variogram.png: scripts/rough.py cache/ivs.parquet cache/heston_vols.parquet cache/heston_params.parquet
 	python3 scripts/rough.py "('C', '2016-02-19', 430)" cache/ivs.parquet cache/heston_vols.parquet cache/heston_params.parquet results/vols.png results/variogram.png
