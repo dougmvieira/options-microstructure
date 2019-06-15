@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.ticker import PercentFormatter
 
 import settings
 
@@ -13,10 +14,12 @@ def plot(r2):
     fig, axs = plt.subplots(3, 1, sharex=True, sharey=True, **settings.PLOT)
     for ax, (e, s) in zip(axs, r2.groupby('Expiry')):
         s.loc[e].reindex(strikes).plot.bar(ax=ax)
+    axs[0].yaxis.set_major_formatter(PercentFormatter(1.))
 
     fig.tight_layout()
 
     return fig
+
 
 if __name__ == '__main__':
     cli = ArgumentParser()

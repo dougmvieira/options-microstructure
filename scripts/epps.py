@@ -4,17 +4,19 @@ import numpy as np
 import pandas as pd
 
 import settings
-from align_settings import STARTTIME, ENDTIME, TIMESTEP
+from align_settings import STARTTIME, ENDTIME
 from utils import resample
 
 
 def get_signature(mids, time_steps):
     time_grids = (np.arange(STARTTIME, ENDTIME + dt, dt) for dt in time_steps)
-    return_grids = (resample(mids, grid).diff().iloc[1:] for grid in time_grids)
+    return_grids = (resample(mids, grid).diff().iloc[1:]
+                    for grid in time_grids)
     correlations = [returns.corr().iloc[0, 1] for returns in return_grids]
     signature = pd.Series(correlations, time_steps)
 
     return signature
+
 
 def plot_epps(bbo, underlying, correction):
     time_steps = pd.to_timedelta('1s')*np.arange(1, 61)
@@ -34,8 +36,9 @@ def plot_epps(bbo, underlying, correction):
     signatures = pd.concat([signature_unc, signature], axis=1,
                            keys=['Original', 'Corrected'])
 
-    return signatures.plot(**settings.PLOT
-                    ).set_ylabel('Correlation').get_figure()
+    ax = signatures.plot(**settings.PLOT).set_ylabel('Correlation')
+    return ax.get_figure()
+
 
 if __name__ == '__main__':
     cli = ArgumentParser()

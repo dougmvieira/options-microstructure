@@ -22,8 +22,9 @@ def regress(bbo, underlying, vols):
         lambda o: OLS(o, regressors['Price']).fit().rsquared)
     r2_vol = mid_rets.agg(
         lambda o: OLS(o, regressors['Volatility']).fit().rsquared)
-    r2_table = pd.concat([r2, r2 - r2_vol, r2 - r2_und], axis=1,
-                         keys=[r'$R^2$', r'Price $sR^2$', r'Volatility $sR^2$'])
+
+    keys = [r'$R^2$', r'Price $sR^2$', r'Volatility $sR^2$']
+    r2_table = pd.concat([r2, r2 - r2_vol, r2 - r2_und], axis=1, keys=keys)
 
     return pd.concat([delta, vega], keys=['Delta', 'Vega'], axis=1), r2_table
 

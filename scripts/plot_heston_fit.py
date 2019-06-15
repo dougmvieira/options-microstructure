@@ -36,7 +36,7 @@ def plot(underlying, ivs, params, date):
             strike_grid)
 
         heston_ivs.plot(ax=ax, color='gray').set_ylabel('Implied volatility')
-        ax.set_title(f"Expiry: {e}")
+        ax.set_title("Expiry: {}".format(e.strftime('%Y-%m-%d')))
 
     return fig
 

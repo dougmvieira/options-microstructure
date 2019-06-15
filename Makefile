@@ -1,9 +1,7 @@
-all: results/aex_index.png selection acf_pacf discount calibration regression results/correction_stats.tex rough epps
+all: results/aex_index.png results/sel.tex acf_pacf discount calibration regression results/correction_stats.tex rough epps activity
 
 
-selection: results/sel_calls.tex results/sel_puts.tex
-
-discount: results/discount_tseries.png results/discount_curve.png
+discount: results/discount_tseries.png results/discount_curve.tex
 
 acf_pacf: results/acf_pacf.png results/acf_pacf_rets.png results/underlying_acf_pacf.png results/acf_pacf_option.txt
 
@@ -14,6 +12,8 @@ regression: results/compare_deltas_call.png results/compare_deltas_put.png resul
 rough: results/vols.png results/variogram.png
 
 epps: results/epps_atm.png results/epps_large_tick.png
+
+activity: results/trade_activity.png results/trade_activity_expiries.tex
 
 
 DER_EU_ENXT_ALL_BBO_20160104.csv.zip:
@@ -59,11 +59,11 @@ cache/heston_greeks.parquet: scripts/heston_greeks.py cache/aligned_bbo.parquet 
 results/aex_index.png: scripts/plot_aex_index.py cache/underlying.parquet
 	python3 scripts/plot_aex_index.py cache/underlying.parquet results/aex_index.png
 
-results/sel_calls.tex results/sel_puts.tex: scripts/table_option_selection.py cache/aligned_bbo.parquet
-	python3 scripts/table_option_selection.py cache/aligned_bbo.parquet results/sel_calls.tex results/sel_puts.tex
+results/sel.tex: scripts/table_option_selection.py cache/aligned_bbo.parquet
+	python3 scripts/table_option_selection.py cache/aligned_bbo.parquet results/sel.tex
 
-results/discount_tseries.png results/discount_curve.png: scripts/plot_discount.py cache/discount_tseries.parquet cache/discount_curve.parquet
-	python3 scripts/plot_discount.py cache/discount_tseries.parquet cache/discount_curve.parquet results/discount_tseries.png results/discount_curve.png
+results/discount_tseries.png results/discount_curve.tex: scripts/plot_discount.py cache/discount_tseries.parquet cache/discount_curve.parquet
+	python3 scripts/plot_discount.py cache/discount_tseries.parquet cache/discount_curve.parquet results/discount_tseries.png results/discount_curve.tex
 
 results/heston_params.tex: scripts/table_heston_fit.py cache/heston_params.parquet
 	python3 scripts/table_heston_fit.py cache/heston_params.parquet results/heston_params.tex
@@ -94,3 +94,6 @@ results/epps_large_tick.png: scripts/epps.py cache/bbo_aex.parquet cache/underly
 
 results/r2_call.png results/r2_put.png: scripts/plot_r2.py cache/r2_table.parquet
 	python3 scripts/plot_r2.py cache/r2_table.parquet results/r2_call.png results/r2_put.png
+
+results/trade_activity.png results/trade_activity_expiries.tex: scripts/trade_activity.py cache/trade.parquet cache/underlying.parquet
+	python3 scripts/trade_activity.py AEX cache/trade.parquet cache/underlying.parquet results/trade_activity.png results/trade_activity_expiries.tex

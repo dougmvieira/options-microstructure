@@ -2,8 +2,7 @@ from argparse import ArgumentParser
 
 import pandas as pd
 
-import settings
-from utils import plot_shades, build_discount_curve
+from utils import build_discount_curve
 
 
 def build(filename, underlying):

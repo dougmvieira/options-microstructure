@@ -15,7 +15,7 @@ def get_heston_greeks(date, bbo, underlying, discount, vols, params):
 
     strikes = discount[properties['Expiry']].values*properties['Strike'].values
     expiries = years_to_expiry(date, properties['Expiry'])
-    put = (properties['Class']=='P')
+    put = (properties['Class'] == 'P')
 
     deltas = pd.DataFrame(heston.delta(underlying.values[:, None],
                                        strikes, expiries, vols.values[:, None],

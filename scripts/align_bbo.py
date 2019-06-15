@@ -11,7 +11,7 @@ def align_bbo(bbo):
     time_grid = np.arange(STARTTIME, ENDTIME + TIMESTEP, TIMESTEP)
 
     return bbo.groupby(['Class', 'Expiry', 'Strike']
-                    ).apply(lambda o: resample(o.loc[o.name], time_grid))
+             ).apply(lambda o: resample(o.loc[o.name], time_grid))
 
 
 def align_underlying(underlying):

@@ -13,7 +13,7 @@ def build(bbo, underlying, discount, date):
         lambda side: side.groupby(['Class', 'Expiry', 'Strike']).transform(
             lambda o: blackscholes.implied_vol(
                 underlying, discount[o.name[1]]*o.name[2],
-                _years_to_expiry(date, o.name[1]), o, o.name[0]=='P')))
+                _years_to_expiry(date, o.name[1]), o, o.name[0] == 'P')))
 
 
 if __name__ == '__main__':

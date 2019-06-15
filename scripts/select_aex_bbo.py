@@ -2,8 +2,6 @@ from argparse import ArgumentParser
 
 import pandas as pd
 
-from utils import resample
-
 
 NOPTS = 40
 PAIRSSEL = [('C', '2016-02-19', 430), ('P', '2016-02-19', 430),
@@ -41,7 +39,7 @@ if __name__ == '__main__':
     bbo_pairs = pd.concat([bbo.xs(sel, drop_level=False) for sel in PAIRSSEL])
     bbo = pd.concat([bbo.xs(sel, drop_level=False) for sel in opt_sel])
 
-
     bbo.to_parquet(args.dest_bbo_filename, coerce_timestamps='us')
     bbo_pairs.to_parquet(args.dest_bbo_pairs_filename, coerce_timestamps='us')
-    underlying.to_parquet(args.dest_underlying_filename, coerce_timestamps='us')
+    underlying.to_parquet(args.dest_underlying_filename,
+                          coerce_timestamps='us')

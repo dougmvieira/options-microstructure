@@ -1,8 +1,7 @@
 from argparse import ArgumentParser
 
-import numpy as np
 import pandas as pd
-from fyne import blackscholes, heston
+from fyne import heston
 
 from utils import years_to_expiry
 

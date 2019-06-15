@@ -1,24 +1,28 @@
 from argparse import ArgumentParser
 
 import pandas as pd
+from matplotlib.dates import DateFormatter
 
 import settings
-from utils import plot_shades, build_discount_curve
+from utils import plot_shades
 
 
 def plot_tseries(tseries, plot_filename):
-    ax = plot_shades(tseries['Bid'].unstack(['Expiry', 'Strike']),
-                     tseries['Ask'].unstack(['Expiry', 'Strike']),
-                     **settings.PLOT)
+    expiries = tseries.index.levels[tseries.index.names.index('Expiry')]
+    expiries = expiries.strftime('%Y-%m-%d')
+    tseries.index.set_levels(expiries, 'Expiry', inplace=True)
+
+    bid = tseries['Bid'].unstack(['Expiry', 'Strike'])
+    ask = tseries['Ask'].unstack(['Expiry', 'Strike'])
+
+    ax = plot_shades(bid, ask, **settings.PLOT)
     ax.set_ylim((1, None))
+    ax.set_xlabel('Time')
     ax.set_ylabel('Discount factor')
+    ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+
     ax.get_figure().savefig(args.dest_tseries_filename)
     ax.get_figure().clf()
-
-
-def plot_curve(curve, plot_filename):
-    ax = curve.plot(**settings.PLOT).set_ylabel('Discount factor')
-    ax.get_figure().savefig(args.dest_curve_filename)
 
 
 if __name__ == '__main__':
@@ -33,4 +37,5 @@ if __name__ == '__main__':
     plot_tseries(tseries, args.dest_tseries_filename)
 
     curve = pd.read_parquet(args.curve_filename)
-    plot_curve(curve, args.dest_curve_filename)
+    curve.reset_index().to_latex(args.dest_curve_filename, index=False,
+                                 **settings.TABLE)

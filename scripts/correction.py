@@ -23,7 +23,8 @@ def get_correction(bbo):
     beta = ols.map(lambda x: x.params[0])
     stats = pd.concat([rsquared, beta], axis=1, keys=['$R^2$', r'$\beta$'])
 
-    correction = returns.groupby(['Class', 'Expiry', 'Strike'], group_keys=False
+    correction = returns.groupby(['Class', 'Expiry', 'Strike'],
+                                 group_keys=False
                        ).apply(lambda o: regress(o).fittedvalues)
     correction = pd.DataFrame(correction, columns=['Correction'])
 
@@ -44,5 +45,6 @@ if __name__ == '__main__':
     mask[:-3] |= mask[3:]
 
     correction, stats = get_correction(bbo[mask])
-    correction.to_parquet(args.dest_correction_filename, coerce_timestamps='us')
+    correction.to_parquet(args.dest_correction_filename,
+                          coerce_timestamps='us')
     stats.to_parquet(args.dest_stats_filename)

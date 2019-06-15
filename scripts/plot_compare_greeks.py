@@ -15,9 +15,11 @@ def plot_greek(heston, reg):
     id_line = pd.Series(edges, edges)
 
     _, ax = plt.subplots(**settings.PLOT)
-    colours = cm.get_cmap('tab10' if len(greek.groupby('Expiry')) <= 10 else 'tab20').colors
+    colours = cm.get_cmap('tab10' if len(greek.groupby('Expiry')) <= 10
+                          else 'tab20').colors
     for (label, group), colour in zip(greek.groupby('Expiry'), colours):
-        group.plot.scatter(x='Model', y='Regression', ax=ax, label=label, color=colour)
+        group.plot.scatter(x='Model', y='Regression', ax=ax,
+                           label=label.strftime('%Y-%m-%d'), color=colour)
     plt.legend(title='Expiry')
     id_line.plot(ax=ax)
 

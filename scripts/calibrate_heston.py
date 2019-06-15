@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 import pandas as pd
-from fyne import blackscholes, heston
+from fyne import heston
 
 from utils import years_to_expiry
 
@@ -22,7 +22,7 @@ def calibrate(underlying, bbo, ivs, discount, date):
 
     params = heston.calibration_crosssectional(
         underlying.loc[time], strikes, expiries, mid['Mid'].values,
-        initial_guess, mid['Class']=='P', weights)
+        initial_guess, mid['Class'] == 'P', weights)
 
     index = pd.Index(['$V_t$', '$\kappa$', '$\theta$', '$\nu$', '$\rho$'],
                      name='Parameter')

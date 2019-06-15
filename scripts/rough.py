@@ -3,8 +3,7 @@ from argparse import ArgumentParser
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
-
-import settings
+from matplotlib.dates import DateFormatter
 
 
 def get_variogram(ts, n_lags):
@@ -32,7 +31,9 @@ def plot_vols(heston_vols, implied_vols, heston_params):
     vols['Long-term'] = np.sqrt(heston_params['$\theta$'])
     vols.index.name = 'Time'
 
-    ax = vols.plot().set_ylabel('Volatility')
+    ax = vols.plot()
+    ax.set_ylabel('Volatility')
+    ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
     return ax.get_figure()
 
 
@@ -44,8 +45,8 @@ def plot_variogram(vols, **plot_kwargs):
     fit_line = np.exp(np.log(variogram.values[0]) + 2*hurst_index*(x - x[0]))
     fit_line = pd.Series(fit_line, variogram.index)
 
-    ax = fit_line.plot(label=f'$H = {hurst_index}$', logx=False, logy=False,
-                       legend=True, **plot_kwargs)
+    ax = fit_line.plot(label='$H = {:.3f}$'.format(hurst_index), logx=False,
+                       logy=False, legend=True, **plot_kwargs)
     colour = ax.get_lines()[-1].get_color()
     ax = variogram.reset_index(
                  ).plot.scatter(x='Lag', y='Variogram', logx=True, logy=True,
