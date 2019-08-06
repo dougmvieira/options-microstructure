@@ -97,3 +97,10 @@ results/r2_call.png results/r2_put.png: scripts/plot_r2.py cache/r2_table.parque
 
 results/trade_activity.png results/trade_activity_expiries.tex: scripts/trade_activity.py cache/trade.parquet cache/underlying.parquet
 	python3 scripts/trade_activity.py AEX cache/trade.parquet cache/underlying.parquet results/trade_activity.png results/trade_activity_expiries.tex
+
+cache/prices_rich.parquet cache/ivs_rich.parquet: scripts/build_spread.py scripts/utils.py cache/discount_curve.parquet cache/underlying.parquet cache/bbo.parquet
+	python3 scripts/build_spread.py 2016-01-04 cache/discount_curve.parquet cache/underlying.parquet cache/bbo.parquet cache/prices_rich.parquet cache/ivs_rich.parquet
+
+results/spread.png results/spread_iv.png: scripts/plot_spread.py cache/prices_rich.parquet cache/ivs_rich.parquet
+	python3 scripts/plot_spread.py cache/prices_rich.parquet results/spread.png
+	python3 scripts/plot_spread.py cache/ivs_rich.parquet results/spread_iv.png
