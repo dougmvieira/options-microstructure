@@ -101,6 +101,14 @@ results/trade_activity.png results/trade_activity_expiries.tex: scripts/trade_ac
 cache/prices_rich.parquet cache/ivs_rich.parquet: scripts/build_spread.py scripts/utils.py cache/discount_curve.parquet cache/underlying.parquet cache/bbo.parquet
 	python3 scripts/build_spread.py 2016-01-04 cache/discount_curve.parquet cache/underlying.parquet cache/bbo.parquet cache/prices_rich.parquet cache/ivs_rich.parquet
 
-results/spread.png results/spread_iv.png: scripts/plot_spread.py cache/prices_rich.parquet cache/ivs_rich.parquet
+results/spread.png: scripts/plot_spread.py cache/prices_rich.parquet
 	python3 scripts/plot_spread.py cache/prices_rich.parquet results/spread.png
+
+results/spread_iv.png: scripts/plot_spread.py cache/ivs_rich.parquet
 	python3 scripts/plot_spread.py cache/ivs_rich.parquet results/spread_iv.png
+
+results/arrival_bubble.png results/intraday_volume.png results/intraday_duration.png results/intraday_arrival.png results/arrival_quartiles.png: scripts/market_making.py cache/prices_rich.parquet cache/trade.parquet
+	python3 scripts/market_making.py cache/prices_rich.parquet cache/trade.parquet results/arrival_bubble.png results/intraday_volume.png results/intraday_duration.png results/intraday_arrival.png results/arrival_quartiles.png
+
+results/intensities_fit.png: scripts/intensity_calibration.py cache/prices_rich.parquet cache/trade.parquet
+	python3 scripts/intensity_calibration.py 2016-02-19 0.05 cache/prices_rich.parquet cache/trade.parquet results/intensities_fit.png
