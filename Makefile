@@ -107,8 +107,14 @@ results/spread.png: scripts/plot_spread.py cache/prices_rich.parquet
 results/spread_iv.png: scripts/plot_spread.py cache/ivs_rich.parquet
 	python3 scripts/plot_spread.py cache/ivs_rich.parquet results/spread_iv.png
 
-results/arrival_bubble.png results/intraday_volume.png results/intraday_duration.png results/intraday_arrival.png results/arrival_quartiles.png: scripts/market_making.py cache/prices_rich.parquet cache/trade.parquet
-	python3 scripts/market_making.py cache/prices_rich.parquet cache/trade.parquet results/arrival_bubble.png results/intraday_volume.png results/intraday_duration.png results/intraday_arrival.png results/arrival_quartiles.png
+results/arrival_bubble.png results/intraday_volume.png results/intraday_duration.png results/intraday_arrival.png: scripts/intensity_exploratory.py cache/prices_rich.parquet cache/trade.parquet
+	python3 scripts/intensity_exploratory.py cache/prices_rich.parquet cache/trade.parquet results/arrival_bubble.png results/intraday_volume.png results/intraday_duration.png results/intraday_arrival.png
 
-results/intensities_fit.png: scripts/intensity_calibration.py cache/prices_rich.parquet cache/trade.parquet
-	python3 scripts/intensity_calibration.py 2016-02-19 0.05 cache/prices_rich.parquet cache/trade.parquet results/intensities_fit.png
+cache/intensities.parquet cache/intensity_params.parquet: scripts/intensity_calibration.py cache/prices_rich.parquet cache/trade.parquet
+	python3 scripts/intensity_calibration.py 2016-02-19 0.05 1000 cache/prices_rich.parquet cache/trade.parquet cache/intensities.parquet cache/intensity_params.parquet
+
+results/intensities_fit.png: scripts/plot_intensity_calibration.py cache/intensities.parquet cache/intensity_params.parquet
+	python3 scripts/plot_intensity_calibration.py cache/intensities.parquet cache/intensity_params.parquet results/intensities_fit.png
+
+results/intensity_params.tex results/intensity_decay.tex results/optimal_greeks.png results/optimal_spread_abs.png results/optimal_spread_rel.png: scripts/market_making_example.py cache/aligned_underlying.parquet cache/intensity_params.parquet cache/heston_params.parquet cache/aligned_bbo.parquet cache/trade.parquet
+	python3 scripts/market_making_example.py AEX 2016-01-04 2016-02-19 cache/aligned_underlying.parquet cache/intensity_params.parquet cache/heston_params.parquet cache/aligned_bbo.parquet cache/trade.parquet results/intensity_params.tex results/intensity_decay.tex results/optimal_greeks.png results/optimal_spread_abs.png results/optimal_spread_rel.png

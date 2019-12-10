@@ -1,11 +1,10 @@
 from argparse import ArgumentParser
-from itertools import starmap
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from arch.bootstrap import StationaryBootstrap
+from statsmodels.nonparametric.kernel_regression import KernelReg
 
 from utils import resample
 from align_settings import STARTTIME, ENDTIME
@@ -67,17 +66,17 @@ def filter_trade_on_book(quote, trade):
     filtered = trade[valid_trades]
     quote_aligned = quote_aligned.loc[valid_trades]
     filtered['Buy'] = filtered['Price'] == quote_aligned['Ask']
-    filtered['Depth'] = (quote_aligned['Ask'] - quote_aligned['Bid']).round(2)/2
+    filtered['Half-spread'] = (quote_aligned['Ask'] - quote_aligned['Bid']).round(2)/2
 
     return filtered
 
 
 def compute_duration(quote):
     quote = quote.copy()
-    quote['Depth'] = (quote['Ask'] - quote['Bid']).round(2)/2
+    quote['Half-spread'] = (quote['Ask'] - quote['Bid']).round(2)/2
 
     time = quote.reset_index('Time'
-               ).set_index('Depth', append=True)[['Time']]
+               ).set_index('Half-spread', append=True)[['Time']]
     time['Duration'] = time['Time'].groupby(['Class', 'Strike']
                                   ).transform(lambda t: t.diff().shift(-1))
     time['Time'] += time['Duration']/2
@@ -101,103 +100,107 @@ def compute_volume_duration(quote, trade, expiry, tick_size):
 
     quote_gridded, trade_gridded = grid_quote_trade(quote, trade)
     filtered_trade = trade_gridded.groupby('Grid').apply(
-        lambda o: filter_trade_on_book(quote_gridded.xs(o.name, level='Grid'), o.xs(o.name, level='Grid')))
-    volume = filtered_trade.set_index(['Depth', 'Buy'], append=True)['Volume']
-    duration = quote_gridded.groupby('Grid'
-                           ).apply(lambda g: compute_duration(g.xs(g.name, level='Grid')))
+        lambda o: filter_trade_on_book(quote_gridded.xs(o.name, level='Grid'),
+                                       o.xs(o.name, level='Grid')))
+    volume = filtered_trade.set_index(['Half-spread', 'Buy'], append=True)['Volume']
+    duration = quote_gridded.groupby('Grid').apply(
+        lambda g: compute_duration(g.xs(g.name, level='Grid')))
 
-    volume = volume.groupby(['Class', 'Strike', 'Depth', 'Buy', 'Grid']).sum()
-    duration = duration.groupby(['Class', 'Strike', 'Depth', 'Grid']).sum()
+    volume = volume.groupby(['Class', 'Strike', 'Half-spread', 'Buy', 'Grid']).sum()
+    duration = duration.groupby(['Class', 'Strike', 'Half-spread', 'Grid']).sum()
 
     return volume, duration
 
 
 def find_quantiles(s, quantile):
-    quantiles = np.arange(0, 1 - quantile/2, quantile)
-    left = np.searchsorted(s.cumsum()/s.sum(), quantiles)
-    right = [*(left[1:] - 1), -1]
-    return list(zip(s.index[left], s.index[right]))
+    quantiles = np.arange(quantile, 1 - quantile/2, quantile)
+    return s.index[np.searchsorted(s.cumsum()/s.sum(), quantiles)]
 
 
-def build_terciles(volume, duration):
+def build_quartiles(volume, duration):
     volume_by_strike = volume.groupby('Class').apply(lambda c: c.groupby('Strike').sum())
-    strikes = volume_by_strike.groupby('Class').apply(lambda c: find_quantiles(c.xs(c.name), 1/3))
-    volume = volume.groupby('Class').apply(lambda c: pd.concat([c.xs(c.name).loc[sl] for sl in starmap(slice, strikes.xs(c.name))], keys=range(3), names=['Tercile']))
-    duration = duration.groupby('Class').apply(lambda c: pd.concat([c.xs(c.name).loc[sl] for sl in starmap(slice, strikes.xs(c.name))], keys=range(3), names=['Tercile']))
-    volume = volume.groupby(['Class', 'Tercile', 'Depth', 'Grid']).sum()
-    duration = duration.groupby(['Class', 'Tercile', 'Depth', 'Grid']).sum()
-    volume_duration = pd.concat([volume, duration], axis=1,
-                                keys=['Volume', 'Duration']).fillna(0)
-    volume_duration = volume_duration.groupby(['Class', 'Tercile', 'Depth']
-                                    ).apply(lambda d: d.xs(d.name
-                                                      ).loc[STARTTIME:ENDTIME])
+    strikes = volume_by_strike.groupby('Class').apply(
+        lambda c: pd.Index(find_quantiles(c.xs(c.name), 1/4), name='Strike'))
+
+    volume = volume.groupby(['Class', 'Strike', 'Half-spread', 'Grid']).sum()
+    volume_duration = pd.concat(
+        [o.xs((slice(STARTTIME, ENDTIME), slice(0.025, 0.100)),
+              level=('Grid', 'Half-spread'), drop_level=False)
+         for o in [volume, duration]], axis=1).fillna(0)
 
     return volume_duration, strikes
 
 
-def plot_terciles(volume_duration, strikes):
-    arrival_rate = volume_duration.groupby(['Class', 'Tercile', 'Depth']).sum()
-    arrival_rate = arrival_rate.groupby(['Class', 'Tercile']
-                              ).apply(lambda t: t.xs(t.name).loc[:.225])
-    arrival_rate['Arrival rate'] = (
-        arrival_rate['Volume']/arrival_rate['Duration'])
-
-    fig, axes = plt.subplots(3, 2, sharex=True)
-    for ax_row, name in zip(axes, ['Arrival rate', 'Volume', 'Duration']):
-        for ax, payoff in zip(ax_row, ['Call', 'Put']):
-            sel = arrival_rate.xs(payoff[0])[name].unstack('Tercile')
-            sel.plot(ax=ax, logy=True)
-            ax.set_title('{}, {}'.format(name, payoff))
-            labels = ['{}-{}'.format(int(k1), int(k2))
-                      for k1, k2 in strikes[payoff[0]]]
-            ax.legend(labels, title='Strike range')
-
-    return fig
+def compute_arrival_rate(volume, duration, strikes):
+    volume_duration = pd.concat([volume.sum(), duration.sum()],
+                                keys=['Volume', 'Duration'], axis=1)
+    volume_duration_kernel = volume_duration.apply(
+        lambda vd: vd.groupby('Half-spread').apply(
+            lambda d: KernelReg(d.xs(d.name, level='Half-spread'),
+                                d.xs(d.name, level='Half-spread').index,
+                                'c', 'lc')))
+    arrival_rate = volume_duration_kernel.apply(
+        lambda vd: vd.groupby('Half-spread').apply(
+            lambda k: pd.Series(k.xs(k.name).fit(strikes)[0], strikes)))
+    return np.log(arrival_rate['Volume']/arrival_rate['Duration'])
 
 
-def compute_arrival_rate(volume, duration):
-    return np.log(volume.sum()/duration.sum())
+def calibrate(volume_duration, strikes, reps):
+    volume_duration = volume_duration.unstack(['Half-spread', 'Strike'])
 
-
-def compute_gls_confint(volume_duration):
-    volume_by_depth = volume_duration['Volume'].sum(level='Depth')
-    volume_duration = volume_duration.loc[volume_by_depth.index[volume_by_depth > 30]]
-    volume_duration = volume_duration.unstack('Depth')
-    volume, duration = volume_duration['Volume'], volume_duration['Duration']
-    sbs = StationaryBootstrap(15, volume=volume, duration=duration)
-    depths = volume_duration['Volume'].columns
-    sigma = sbs.cov(compute_arrival_rate)
-    conf_int = pd.DataFrame(sbs.conf_int(compute_arrival_rate), ['2.5%', '97.5%'], depths).T
-
-    arrival_rate = compute_arrival_rate(volume, duration)
+    arrival_rate = volume_duration.groupby('Class').apply(
+        lambda c: compute_arrival_rate(c.loc[c.name, 'Volume'],
+                                       c.loc[c.name, 'Duration'],
+                                       strikes[c.name]))
     arrival_rate.name = 'Arrival rate'
-    gls = sm.WLS(arrival_rate, sm.add_constant(arrival_rate.index), sigma=1/np.diag(sigma)).fit()
-    fitted = gls.fittedvalues
-    fitted.name = 'WLS fit'
+    arrival_rate.index = arrival_rate.index.reorder_levels(['Class', 'Strike',
+                                                            'Half-spread'])
 
-    return map(np.exp, [arrival_rate, conf_int, fitted])
+    sbs = volume_duration.groupby('Class').apply(
+        lambda c: StationaryBootstrap(25, volume=c.loc[c.name, 'Volume'],
+                                      duration=c.loc[c.name, 'Duration']))
 
+    conf_int = sbs.groupby('Class').apply(lambda c: pd.DataFrame(
+        c[c.name].conf_int(lambda volume, duration: compute_arrival_rate(
+            volume, duration, strikes[c.name]), reps=reps),
+        ['2.5%', '97.5%'], arrival_rate.loc[c.name].index))
+    conf_int = conf_int.T.stack('Class')
+    conf_int.index = conf_int.index.reorder_levels(['Class', 'Strike', 'Half-spread'])
 
-def plot_gls_confint(volume_duration, strikes):
-    fig, axes = plt.subplots(3, 2, figsize=(16, 10))
-    for (t, g1), ax_row in zip(volume_duration.groupby('Tercile'), axes):
-        for (c, g2), ax in zip(g1.xs(t, level='Tercile').groupby('Class'), ax_row):
-            arrival_rate, conf_int, fitted = compute_gls_confint(g2.xs(c))
-            pd.concat([arrival_rate, fitted], axis=1).plot(logy='True', ax=ax)
-            conf_int.plot(ax=ax, linestyle='dashed')
-            ax.set_title('Tercile {}, {}'.format(t, 'Call' if c == 'C' else 'Put'))
+    sigma = sbs.groupby('Class').apply(lambda c: pd.DataFrame(
+        c[c.name].cov(lambda volume, duration: compute_arrival_rate(
+            volume, duration, strikes[c.name]), reps=reps),
+        arrival_rate.loc[c.name].index, arrival_rate.loc[c.name].index))
+    sigma = sigma.groupby('Strike').apply(lambda k: k.xs(k.name, level='Strike',
+                                                         axis=1))
+    sigma.dropna(how='all', inplace=True)
+    gls = arrival_rate.loc[sigma.index].groupby(['Class', 'Strike']).apply(
+        lambda k: sm.GLS(k.values,
+                         sm.add_constant(k.index.get_level_values('Half-spread')),
+                         sigma=sigma.xs(k.name, level=['Class', 'Strike']
+                                   ).dropna(axis=1)).fit())
+    params = gls.apply(lambda g: pd.Series([np.exp(g.params[0]), -g.params[1]],
+                                           ['A', '$\\kappa$']))
+    base_conf_int = gls.apply(
+        lambda g: pd.Series(np.exp(g.conf_int(alpha=.1)[0]), ['A 5%', 'A 95%']))
+    decay_conf_int = gls.apply(
+        lambda g: pd.Series(-g.conf_int(alpha=.1)[1, ::-1],
+                            ['$\\kappa$ 5%', '$\\kappa$ 95%']))
+    params = pd.concat([params, base_conf_int, decay_conf_int], axis=1)
 
-    fig.tight_layout()
-    return fig
+    arrival_rate = np.exp(pd.concat([arrival_rate, conf_int], axis=1))
+    return arrival_rate, params
 
 
 if __name__ == '__main__':
     cli = ArgumentParser()
     cli.add_argument('expiry')
     cli.add_argument('tick_size')
+    cli.add_argument('reps')
     cli.add_argument('quote_filename')
     cli.add_argument('trade_filename')
-    cli.add_argument('dest_filename')
+    cli.add_argument('dest_arrival_rate_filename')
+    cli.add_argument('dest_params_filename')
     args = cli.parse_args()
 
     expiry = pd.to_datetime(args.expiry)
@@ -209,7 +212,8 @@ if __name__ == '__main__':
     quote.sort_index(inplace=True)
 
     volume, duration = compute_volume_duration(quote, trade, expiry, tick_size)
-    volume_duration, strikes = build_terciles(volume, duration)
+    volume_duration, strikes = build_quartiles(volume, duration)
+    arrival_rate, params = calibrate(volume_duration, strikes, int(args.reps))
 
-    fig = plot_gls_confint(volume_duration, strikes)
-    fig.savefig(args.dest_filename)
+    arrival_rate.to_parquet(args.dest_arrival_rate_filename)
+    params.to_parquet(args.dest_params_filename)

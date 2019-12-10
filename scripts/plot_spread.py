@@ -50,8 +50,11 @@ def plot(spread):
         for cp, cm in [('C', plt.cm.Blues), ('P', plt.cm.Reds)]:
             z = k.xs((cp, e))(np.array([x_b.ravel(), y_b.ravel()]))
             z = np.rot90(np.reshape(z, x_b.shape))
-            ax.imshow(z, extent=[xmin, xmax, ymin, ymax], cmap=cm,
+            ax.imshow(np.sqrt(z), extent=[xmin, xmax, ymin, ymax], cmap=cm,
                       aspect='auto', alpha=.5)
+        ax.set_yticklabels(['{:.0%}'.format(x) for x in ax.get_yticks()])
+        ax.set_ylabel('Relative spread')
+    ax.set_xlabel('Log-moneyness')
 
     return fig
 
